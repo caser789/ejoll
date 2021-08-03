@@ -28,3 +28,5 @@ type Config struct {
 
 type Poller interface {
 }
+
+type Event uint8

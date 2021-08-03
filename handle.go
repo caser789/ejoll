@@ -1,9 +1,9 @@
 package netpoll
 
 import (
-	"net"
+	// "net"
 	"os"
-	"syscall"
+	// "syscall"
 )
 
 // filer describes an object that has ability to return os.File.
