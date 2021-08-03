@@ -22,8 +22,8 @@ func defaultOnWaitError(err error) {
 
 // Config contains options for Poller configuration.
 type Config struct {
-    // OnWaitError will be called from goroutine, waiting for events
-    OnWaitError func(error)
+	// OnWaitError will be called from goroutine, waiting for events
+	OnWaitError func(error)
 }
 
 type Poller interface {
