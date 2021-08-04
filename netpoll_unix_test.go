@@ -78,7 +78,7 @@ func TestPoller(t *testing.T) {
 		}
 		time.Sleep(time.Millisecond)
 	}
-	if err = unix.Cloes(w); err != nil {
+	if err = unix.Close(w); err != nil {
 		t.Fatal(err)
 	}
 

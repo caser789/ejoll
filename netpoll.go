@@ -88,7 +88,7 @@ const (
 // Event values that configure the Poller's behavior.
 const (
 	EventOneShot      Event = 0x4
-	EventEdgeTriggerd Event = 0x8
+	EventEdgeTriggered Event = 0x8
 )
 
 const (

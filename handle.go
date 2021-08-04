@@ -1,9 +1,9 @@
 package netpoll
 
 import (
-	// "net"
+    "net"
 	"os"
-	// "syscall"
+    "syscall"
 )
 
 // filer describes an object that has ability to return os.File.
@@ -39,9 +39,9 @@ func Must(desc *Desc, err error) *Desc {
 }
 
 // HandleRead creates read descriptor for further use in Poller methods.
-// It is the same as Handle(conn, EventRead|EventEdgeTriggerd)
+// It is the same as Handle(conn, EventRead|EventEdgeTriggered)
 func HandleRead(conn net.Conn) (*Desc, error) {
-	return Handle(conn, EventRead|EventEdgeTriggerd)
+	return Handle(conn, EventRead|EventEdgeTriggered)
 }
 
 // HandleWrite creates write descriptor for further use in Poller methods.
@@ -54,13 +54,13 @@ func HandleWrite(conn net.Conn) (*Desc, error) {
 // methods.
 // It is the same as Handle(conn, EventRead|EventWrite|EventEdgeTriggered).
 func HandleReadWrite(conn net.Conn) (*Desc, error) {
-	return Handle(conn, EventRead|EventWrite|EventEdgeTriggerd)
+	return Handle(conn, EventRead|EventWrite|EventEdgeTriggered)
 }
 
 // Handle creates new Desc with given conn and event.
 // Returned descriptor could be used as argument to Start(), Resume() and
 // Stop() methods of some Poller implementation.
-func Handle(conn net.Conn, event Evnet) (*Desc, error) {
+func Handle(conn net.Conn, event Event) (*Desc, error) {
 	f, ok := conn.(filer)
 	if !ok {
 		return nil, ErrNotFiler
