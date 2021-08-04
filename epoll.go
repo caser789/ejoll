@@ -22,9 +22,9 @@ const (
 	EPOLLET                 = unix.EPOLLET
 	EPOLLONESHOT            = unix.EPOLLONESHOT
 
-	// EPOLLCLOSED is a special EpollEvent value the receipt of which means
+	// _EPOLLCLOSED is a special EpollEvent value the receipt of which means
 	// that the epoll instance is closed
-	EPOLLCLOSED = 0x20
+	_EPOLLCLOSED = 0x20
 )
 
 // String returns a string representation of EpollEvent.
@@ -47,7 +47,7 @@ func (evt EpollEvent) String() (str string) {
 	name(EPOLLHUP, "EPOLLHUP")
 	name(EPOLLET, "EPOLLET")
 	name(EPOLLONESHOT, "EPOLLONESHOT")
-	name(EPOLLCLOSED, "EPOLLCLOSED")
+	name(_EPOLLCLOSED, "_EPOLLCLOSED")
 
 	return
 }
@@ -157,7 +157,7 @@ func (ep *Epoll) Close() (err error) {
 
 	for _, cb := range callbacks {
 		if cb != nil {
-			cb(EPOLLCLOSED)
+			cb(_EPOLLCLOSED)
 		}
 	}
 
@@ -166,7 +166,7 @@ func (ep *Epoll) Close() (err error) {
 
 // Add adds fd to epoll set with given events.
 // Callback will be called on each received event from epoll.
-// Note that EPOLLCLOSED is triggerd for every cb when epoll closed.
+// Note that _EPOLLCLOSED is triggerd for every cb when epoll closed.
 func (ep *Epoll) Add(fd int, events EpollEvent, cb func(EpollEvent)) (err error) {
 	ev := &unix.EpollEvent{
 		Events: uint32(events),
@@ -184,7 +184,7 @@ func (ep *Epoll) Add(fd int, events EpollEvent, cb func(EpollEvent)) (err error)
 	}
 	ep.callbacks[fd] = cb
 
-	return ep.sendCtl(fd, unix.EPOLL_CTL_ADD, ev)
+	return unix.EpollCtl(ep.fd, unix.EPOLL_CTL_ADD, fd, ev)
 }
 
 // Del removes fd from epoll set.
@@ -192,9 +192,16 @@ func (ep *Epoll) Del(fd int) (err error) {
 	ep.mu.Lock()
 	defer ep.mu.Unlock()
 
+	if ep.closed {
+		return ErrClosed
+	}
+	if _, ok := ep.callbacks[fd]; !ok {
+		return ErrNotRegistered
+	}
+
 	delete(ep.callbacks, fd)
 
-	return ep.sendCtl(fd, unix.EPOLL_CTL_DEL, nil)
+	return unix.EpollCtl(ep.fd, unix.EPOLL_CTL_DEL, fd, nil)
 }
 
 // Del sets to listen events on fd.
@@ -207,15 +214,14 @@ func (ep *Epoll) Mod(fd int, events EpollEvent) (err error) {
 	ep.mu.RLock()
 	defer ep.mu.RUnlock()
 
-	return ep.sendCtl(fd, unix.EPOLL_CTL_MOD, ev)
-}
-
-func (ep *Epoll) sendCtl(fd int, op int, ev *unix.EpollEvent) error {
 	if ep.closed {
 		return ErrClosed
 	}
+	if _, ok := ep.callbacks[fd]; !ok {
+		return ErrNotRegistered
+	}
 
-	return unix.EpollCtl(ep.fd, op, fd, ev)
+	return unix.EpollCtl(ep.fd, unix.EPOLL_CTL_MOD, fd, ev)
 }
 
 const (

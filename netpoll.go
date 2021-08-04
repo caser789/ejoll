@@ -18,6 +18,11 @@ var (
 	// connection with the same underlying file descriptor is already
 	// registered inside instance.
 	ErrRegistered = fmt.Errorf("file descriptor is already registered in poller instance")
+
+	// ErrNotRegistered is returned by Poller Stop() and Resume() methods to
+	// indicate that connection with the same underlying file descriptor was
+	// not registered before within the poller instance.
+	ErrNotRegistered = fmt.Errorf("file descriptor was not registered before in poller instance")
 )
 
 func defaultOnWaitError(err error) {
@@ -77,7 +82,7 @@ type Poller interface {
 type CallbackFn func(Event)
 
 // Event represents netpoll configuration bit mask.
-type Event uint8
+type Event uint16
 
 // Event values that denote the type of events that caller want to receive.
 const (
@@ -87,18 +92,25 @@ const (
 
 // Event values that configure the Poller's behavior.
 const (
-	EventOneShot      Event = 0x4
+	EventOneShot       Event = 0x4
 	EventEdgeTriggered Event = 0x8
 )
 
 const (
-	EventReadHup Event = 0x10
-	EventHup           = 0x20
-	EventErr           = 0x40
+	// EventHup is indicates that some side of i/o operations (receive, send or
+	// both) is closed.
+	// Usually (depending on operating system and its version) the EventReadHup
+	// or EventWriteHup are also set int Event value.
+	EventHup Event = 0x10
 
-	// EventClosed is a special Event value the receipt of which means that the
+	EventReadHup  = 0x20
+	EventWriteHup = 0x40
+
+	EventErr = 0x80
+
+	// EventPollerClosed is a special Event value the receipt of which means that the
 	// Poller instance is closed.
-	EventClosed = 0x80
+	EventPollerClosed = 0x8000
 )
 
 // String returns a string representation of Event.
@@ -120,7 +132,7 @@ func (ev Event) String() (str string) {
 	name(EventReadHup, "EventReadHup")
 	name(EventHup, "EventHup")
 	name(EventErr, "EventErr")
-	name(EventClosed, "EventClosed")
+	name(EventPollerClosed, "EventPollerClosed")
 
 	return
 }
